@@ -14,6 +14,8 @@ def main(config):
         from data_loader.msd_loader import get_audio_loader
     elif config.dataset == 'jamendo':
         from data_loader.jamendo_loader import get_audio_loader
+    elif config.dataset == '4mula':
+        from data_loader.formula_loader import get_audio_loader
 
     # audio length
     if config.model_type == 'fcn' or config.model_type == 'crnn':
@@ -26,6 +28,8 @@ def main(config):
         config.input_length = 80000
     elif config.model_type == 'attention':
         config.input_length = 15 * 16000
+    elif config.model_type == 'short_mel':
+        config.input_length = 130
 
     # get data loder
     train_loader = get_audio_loader(config.data_path,
@@ -41,9 +45,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--num_workers', type=int, default=0)
-    parser.add_argument('--dataset', type=str, default='mtat', choices=['mtat', 'msd', 'jamendo'])
+    parser.add_argument('--dataset', type=str, default='mtat', choices=['mtat', 'msd', 'jamendo', '4mula'])
     parser.add_argument('--model_type', type=str, default='fcn',
-						choices=['fcn', 'musicnn', 'crnn', 'sample', 'se', 'short', 'short_res', 'attention', 'hcnn'])
+						choices=['fcn', 'musicnn', 'crnn', 'sample', 'se', 'short', 'short_res', 'attention', 'hcnn', 'short_mel'])
     parser.add_argument('--n_epochs', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--lr', type=float, default=1e-4)

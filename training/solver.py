@@ -96,6 +96,9 @@ class Solver(object):
             self.file_dict= read_file(train_file)
             self.valid_list= list(read_file(train_file).keys())
             self.mlb = LabelBinarizer().fit(TAGS)
+        if self.dataset == '4mula':
+            self.valid_list = np.load('./../split/4mula/valid.npy')
+            self.binary = np.load('./../split/4mula/binary.npy')
 
 
 
@@ -118,6 +121,8 @@ class Solver(object):
             return Model.CNNSA()
         elif self.model_type == 'hcnn':
             return Model.HarmonicCNN()
+        elif self.model_type == 'short_mel':
+            return Model.ShortChunkMelCNN()
 
     def build_model(self):
         # model
@@ -162,6 +167,7 @@ class Solver(object):
             drop_counter += 1
             self.model = self.model.train()
             for x, y in self.data_loader:
+                #print (x.shape)
                 ctr += 1
                 # Forward
                 x = self.to_var(x)
@@ -230,14 +236,28 @@ class Solver(object):
         elif self.dataset == 'jamendo':
             filename = self.file_dict[fn]['path']
             npy_path = os.path.join(self.data_path, filename)
+        elif self.dataset == '4mula':
+            npy_path = os.path.join(self.data_path, 'mel_npy', fn) + '.npy'
+
         raw = np.load(npy_path, mmap_mode='r')
+        if self.dataset == '4mula':
+            raw = raw.T
 
         # split chunk
         length = len(raw)
         hop = (length - self.input_length) // self.batch_size
-        x = torch.zeros(self.batch_size, self.input_length)
+
+        if self.model_type == 'short_mel':
+            x = torch.zeros(self.batch_size, 128, self.input_length)
+        else:
+            x = torch.zeros(self.batch_size, self.input_length)
+
         for i in range(self.batch_size):
-            x[i] = torch.Tensor(raw[i*hop:i*hop+self.input_length]).unsqueeze(0)
+            l = raw[i*hop:i*hop+self.input_length]
+            if self.dataset == '4mula':
+                l = l.T
+            x[i] = torch.Tensor(l).unsqueeze(0)
+
         return x
 
     def get_auc(self, est_array, gt_array):
@@ -273,7 +293,7 @@ class Solver(object):
         reconst_loss = self.get_loss_function()
         index = 0
         for line in tqdm.tqdm(self.valid_list):
-            if self.dataset == 'mtat':
+            if self.dataset in ['mtat', '4mula']:
                 ix, fn = line.split('\t')
             elif self.dataset == 'msd':
                 fn = line
@@ -286,7 +306,7 @@ class Solver(object):
             x = self.get_tensor(fn)
 
             # ground truth
-            if self.dataset == 'mtat':
+            if self.dataset in ['mtat', '4mula']:
                 ground_truth = self.binary[int(ix)]
             elif self.dataset == 'msd':
                 ground_truth = self.id2tag[fn].flatten()
@@ -296,7 +316,9 @@ class Solver(object):
 
             # forward
             x = self.to_var(x)
-            y = torch.tensor([ground_truth.astype('float32') for i in range(self.batch_size)]).cuda()
+            y = torch.tensor([ground_truth.astype('float32') for i in range(self.batch_size)])
+            if self.is_cuda:
+                y = y.cuda()
             out = self.model(x)
             loss = reconst_loss(out, y)
             losses.append(float(loss.data))

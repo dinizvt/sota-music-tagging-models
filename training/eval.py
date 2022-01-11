@@ -76,8 +76,11 @@ class Predict(object):
         elif self.model_type == 'short_res':
             self.input_length = 59049
             return Model.ShortChunkCNN_Res()
+        elif self.model_type == 'short_mel':
+            self.input_length = 130
+            return Model.ShortChunkMelCNN()
         else:
-            print('model_type has to be one of [fcn, musicnn, crnn, sample, se, short, short_res, attention]')
+            print('model_type has to be one of [fcn, musicnn, crnn, sample, se, short, short_res, short_mel, attention]')
 
     def build_model(self):
         self.model = self.get_model()
@@ -94,6 +97,9 @@ class Predict(object):
         if self.dataset == 'mtat':
             self.test_list = np.load('./../split/mtat/test.npy')
             self.binary = np.load('./../split/mtat/binary.npy')
+        if self.dataset == '4mula':
+            self.test_list = np.load('./../split/4mula/test.npy')
+            self.binary = np.load('./../split/4mula/binary.npy')
         if self.dataset == 'msd':
             test_file = os.path.join('./../split/msd','filtered_list_test.cP')
             test_list = pickle.load(open(test_file,'rb'), encoding='bytes')
@@ -128,14 +134,28 @@ class Predict(object):
         elif self.dataset == 'jamendo':
             filename = self.file_dict[fn]['path']
             npy_path = os.path.join(self.data_path, filename)
+        elif self.dataset == '4mula':
+            npy_path = os.path.join(self.data_path, 'mel_npy', fn) + '.npy'
+            
         raw = np.load(npy_path, mmap_mode='r')
+        if self.dataset == '4mula':
+            raw = raw.T
 
         # split chunk
         length = len(raw)
         hop = (length - self.input_length) // self.batch_size
-        x = torch.zeros(self.batch_size, self.input_length)
+
+        if self.model_type == 'short_mel':
+            x = torch.zeros(self.batch_size, 128, self.input_length)
+        else:
+            x = torch.zeros(self.batch_size, self.input_length)
+
         for i in range(self.batch_size):
-            x[i] = torch.Tensor(raw[i*hop:i*hop+self.input_length]).unsqueeze(0)
+            l = raw[i*hop:i*hop+self.input_length]
+            if self.dataset == '4mula':
+                l = l.T
+            x[i] = torch.Tensor(l).unsqueeze(0)
+
         return x
 
     def get_auc(self, est_array, gt_array):
@@ -151,12 +171,12 @@ class Predict(object):
 
     def get_test_score(self):
         self.model = self.model.eval()
-        est_array = []
-        gt_array = []
+        self.est_array = []
+        self.gt_array = []
         losses = []
         reconst_loss = nn.BCELoss()
         for line in tqdm.tqdm(self.test_list):
-            if self.dataset == 'mtat':
+            if self.dataset in ['mtat', '4mula']:
                 ix, fn = line.split('\t')
             elif self.dataset == 'msd':
                 fn = line
@@ -169,7 +189,7 @@ class Predict(object):
             x = self.get_tensor(fn)
 
             # ground truth
-            if self.dataset == 'mtat':
+            if self.dataset in ['mtat', '4mula']:
                 ground_truth = self.binary[int(ix)]
             elif self.dataset == 'msd':
                 ground_truth = self.id2tag[fn].flatten()
@@ -178,7 +198,9 @@ class Predict(object):
 
             # forward
             x = self.to_var(x)
-            y = torch.tensor([ground_truth.astype('float32') for i in range(self.batch_size)]).cuda()
+            y = torch.tensor([ground_truth.astype('float32') for i in range(self.batch_size)])
+            if self.is_cuda:
+                y = y.cuda()
             out = self.model(x)
             loss = reconst_loss(out, y)
             losses.append(float(loss.data))
@@ -186,13 +208,13 @@ class Predict(object):
 
             # estimate
             estimated = np.array(out).mean(axis=0)
-            est_array.append(estimated)
-            gt_array.append(ground_truth)
+            self.est_array.append(estimated)
+            self.gt_array.append(ground_truth)
 
-        est_array, gt_array = np.array(est_array), np.array(gt_array)
+        self.est_array, self.gt_array = np.array(self.est_array), np.array(self.gt_array)
         loss = np.mean(losses)
 
-        roc_auc, pr_auc = self.get_auc(est_array, gt_array)
+        roc_auc, pr_auc = self.get_auc(self.est_array, self.gt_array)
         return roc_auc, pr_auc, loss
 
 
@@ -200,9 +222,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--num_workers', type=int, default=0)
-    parser.add_argument('--dataset', type=str, default='mtat', choices=['mtat', 'msd', 'jamendo'])
+    parser.add_argument('--dataset', type=str, default='mtat', choices=['mtat', 'msd', 'jamendo', '4mula'])
     parser.add_argument('--model_type', type=str, default='fcn',
-                        choices=['fcn', 'musicnn', 'crnn', 'sample', 'se', 'short', 'short_res', 'attention', 'hcnn'])
+                        choices=['fcn', 'musicnn', 'crnn', 'sample', 'se', 'short', 'short_res', 'short_mel', 'attention', 'hcnn'])
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--model_load_path', type=str, default='.')
     parser.add_argument('--data_path', type=str, default='./data')
