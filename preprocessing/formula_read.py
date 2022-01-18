@@ -2,7 +2,7 @@ import os
 import numpy as np
 import glob
 import librosa
-import fire
+import argparse
 import tqdm
 import pandas as pd
 
@@ -28,7 +28,7 @@ class Processor:
         Args:
             tags_path (str): path to tags_unificadas.npy file
         """
-        
+
         top_50 = np.load('../split/4mula/tags.npy')
 
         tags = pd.read_parquet(tags_path)
@@ -56,8 +56,14 @@ class Processor:
             df.apply(self.get_npy, axis=1)
             
 if __name__ == '__main__':
-	p = Processor()
-	fire.Fire({
-        'run': p.iterate,
-        'split': p.make_split
-    })
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('data_path')
+    parser.add_argument('output_path')
+    parser.add_argument('--split', type=str)
+
+    config = parser.parse_args()
+    p = Processor()
+    p.iterate(config.data_path, config.output_path)
+    if config.split is not None:
+        p.make_split()
