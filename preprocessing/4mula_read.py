@@ -22,8 +22,18 @@ class Processor:
             np.save(os.path.join(self.npy_path, filename), np.stack(row['melspectrogram']).astype('float64'))
         return os.path.join(self.npy_path, filename)
     
-    def iterate(self, data_path):
-        self.get_paths(data_path)
+    def make_split (self, tags):
+        tags = tags.apply(lambda x: np.concatenate([i for i in x if i is not None]), axis=1)
+        tags = tags
+        top_50 = sorted(
+                    zip(*np.unique(np.concatenate(tags.values),return_counts=True)), 
+                    key=lambda x: x[1], reverse=True
+        )[:50]
+        top_50 = [i[0] for i in top_50]
+        
+
+    def iterate(self, data_path, output_path):
+        self.get_paths(data_path, output_path)
         for fn in tqdm.tqdm(self.files):
             df = pd.read_parquet(fn)
             df.apply(self.get_npy, axis=1)
