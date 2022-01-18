@@ -66,4 +66,4 @@ if __name__ == '__main__':
     p = Processor()
     p.iterate(config.data_path, config.output_path)
     if config.split is not None:
-        p.make_split()
+        p.make_split(config.split)
