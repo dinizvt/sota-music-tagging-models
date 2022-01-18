@@ -10,9 +10,9 @@ class Processor:
     def __init__ (self):
         pass
 
-    def get_paths (self, data_path):
-        self.files = glob.glob(os.path.join(data_path, 'Melspectrogram', '*.parquet'))
-        self.npy_path = os.path.join(data_path, 'mel_npy')
+    def get_paths (self, data_path, output_path):
+        self.files = glob.glob(os.path.join(data_path, '*.parquet'))
+        self.npy_path = os.path.join(output_path, 'mel_npy')
         if not os.path.exists(self.npy_path):
             os.makedirs(self.npy_path)
     
