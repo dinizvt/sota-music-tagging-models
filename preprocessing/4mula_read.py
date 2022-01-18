@@ -22,7 +22,8 @@ class Processor:
             np.save(os.path.join(self.npy_path, filename), np.stack(row['melspectrogram']).astype('float64'))
         return os.path.join(self.npy_path, filename)
     
-    def make_split (self, tags):
+    def make_split (self, tags_path):
+        tags = pd.read_parquet(tags_path)
         tags = tags.apply(lambda x: np.concatenate([i for i in x if i is not None]), axis=1)
         tags = tags.reset_index().drop_duplicates('index').reset_index(drop=True)
         top_50 = np.load('../split/tags.npy')
