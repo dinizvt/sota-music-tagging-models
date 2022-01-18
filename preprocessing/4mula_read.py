@@ -26,7 +26,7 @@ class Processor:
         tags = pd.read_parquet(tags_path)
         tags = tags.apply(lambda x: np.concatenate([i for i in x if i is not None]), axis=1)
         tags = tags.reset_index().drop_duplicates('index').reset_index(drop=True)
-        top_50 = np.load('../split/tags.npy')
+        top_50 = np.load('../split/4mula/tags.npy')
 
         print('getting ids on dataset...')
         ids = [i.split('.')[0] for i in glob.glob(os.path.join(self.npy_path, '*.npy'))]
@@ -39,10 +39,10 @@ class Processor:
         idx_shuff = np.random.shuffle(idx_shuff)
         train,test,val = np.split(idx_shuff, [int(len(ids)*0.6), int(len(ids)*0.8)])
         print('saving files...')
-        np.save('../split/binary.npy', binary)
-        np.save('../split/train.npy', tags.query('index in @train').apply(lambda x: f'{x.name}\t{x.values[0]}', axis=1).values.astype('U30'))
-        np.save('../split/test.npy', tags.query('index in @test').apply(lambda x: f'{x.name}\t{x.values[0]}', axis=1).values.astype('U30'))
-        np.save('../split/valid.npy', tags.query('index in @val').apply(lambda x: f'{x.name}\t{x.values[0]}', axis=1).values.astype('U30'))
+        np.save('../split/4mula/binary.npy', binary)
+        np.save('../split/4mula/train.npy', tags.query('index in @train').apply(lambda x: f'{x.name}\t{x.values[0]}', axis=1).values.astype('U30'))
+        np.save('../split/4mula/test.npy', tags.query('index in @test').apply(lambda x: f'{x.name}\t{x.values[0]}', axis=1).values.astype('U30'))
+        np.save('../split/4mula/valid.npy', tags.query('index in @val').apply(lambda x: f'{x.name}\t{x.values[0]}', axis=1).values.astype('U30'))
 
     def iterate(self, data_path, output_path):
         self.get_paths(data_path, output_path)
