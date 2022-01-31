@@ -16,7 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.autograd import Variable
 
 import model as Model
-
+from focalloss import FocalLoss
 
 skip_files = set(['TRAIISZ128F42684BB', 'TRAONEQ128F42A8AB7', 'TRADRNH128E0784511', 'TRBGHEU128F92D778F',
                  'TRCHYIF128F1464CE7', 'TRCVDKQ128E0790C86', 'TREWVFM128F146816E', 'TREQRIV128F1468B08',
@@ -62,6 +62,7 @@ class Solver(object):
         self.n_epochs = config.n_epochs
         self.lr = config.lr
         self.use_tensorboard = config.use_tensorboard
+        self.loss_type = config.loss
 
         # model path and step size
         self.model_save_path = config.model_save_path
@@ -151,7 +152,10 @@ class Solver(object):
         return Variable(x)
 
     def get_loss_function(self):
-        return nn.BCELoss()
+        if self.loss_type == 'bce':
+            return nn.BCELoss()
+        elif self.loss_type == 'focal':
+            return FocalLoss()
 
     def train(self):
         # Start training
@@ -334,7 +338,6 @@ class Solver(object):
         est_array, gt_array = np.array(est_array), np.array(gt_array)
         loss = np.mean(losses)
         print('loss: %.4f' % loss)
-
         roc_auc, pr_auc = self.get_auc(est_array, gt_array)
         self.writer.add_scalar('Loss/valid', loss, epoch)
         self.writer.add_scalar('AUC/ROC', roc_auc, epoch)

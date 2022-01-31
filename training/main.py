@@ -56,6 +56,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_load_path', type=str, default='.')
     parser.add_argument('--data_path', type=str, default='./data')
     parser.add_argument('--log_step', type=int, default=20)
+    parser.add_argument('--loss', type=str, default='bce', choices=['bce', 'focal'])
 
     config = parser.parse_args()
 

@@ -16,6 +16,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from solver import skip_files
+from focalloss import FocalLoss
 from sklearn.preprocessing import LabelBinarizer
 
 import model as Model
@@ -47,6 +48,7 @@ class Predict(object):
         self.is_cuda = torch.cuda.is_available()
         self.build_model()
         self.get_dataset()
+        self.loss_type = config.loss
 
     def get_model(self):
         if self.model_type == 'fcn':
@@ -163,6 +165,12 @@ class Predict(object):
         pr_aucs = metrics.average_precision_score(gt_array, est_array, average='macro')
         return roc_aucs, pr_aucs
 
+    def get_loss_function (self):
+        if self.loss_type == 'bce':
+            return nn.BCELoss()
+        elif self.loss_type == 'focal':
+            return FocalLoss()
+
     def test(self):
         roc_auc, pr_auc, loss = self.get_test_score()
         print('loss: %.4f' % loss)
@@ -174,7 +182,7 @@ class Predict(object):
         self.est_array = []
         self.gt_array = []
         losses = []
-        reconst_loss = nn.BCELoss()
+        reconst_loss = self.get_loss_function()
         for line in tqdm.tqdm(self.test_list):
             if self.dataset in ['mtat', '4mula']:
                 ix, fn = line.split('\t')
