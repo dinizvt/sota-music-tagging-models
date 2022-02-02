@@ -124,6 +124,8 @@ class Solver(object):
             return Model.HarmonicCNN()
         elif self.model_type == 'short_mel':
             return Model.ShortChunkMelCNN()
+        elif self.model_type == 'musicnn_mel':
+            return Model.MusicnnMel(dataset=self.dataset)
 
     def build_model(self):
         # model
@@ -251,7 +253,7 @@ class Solver(object):
         length = len(raw)
         hop = (length - self.input_length) // self.batch_size
 
-        if self.model_type == 'short_mel':
+        if self.model_type in ['short_mel', 'musicnn_mel']:
             x = torch.zeros(self.batch_size, 128, self.input_length)
         else:
             x = torch.zeros(self.batch_size, self.input_length)

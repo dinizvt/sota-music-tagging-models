@@ -28,7 +28,7 @@ def main(config):
         config.input_length = 80000
     elif config.model_type == 'attention':
         config.input_length = 15 * 16000
-    elif config.model_type == 'short_mel':
+    elif config.model_type in ['musicnn_mel', 'short_mel']:
         config.input_length = 130
 
     # get data loder
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--dataset', type=str, default='mtat', choices=['mtat', 'msd', 'jamendo', '4mula'])
     parser.add_argument('--model_type', type=str, default='fcn',
-						choices=['fcn', 'musicnn', 'crnn', 'sample', 'se', 'short', 'short_res', 'attention', 'hcnn', 'short_mel'])
+						choices=['fcn', 'musicnn', 'crnn', 'sample', 'se', 'short', 'short_res', 'attention', 'hcnn', 'short_mel', 'musicnn_mel'])
     parser.add_argument('--n_epochs', type=int, default=200)
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--lr', type=float, default=1e-4)
