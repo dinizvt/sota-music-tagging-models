@@ -58,7 +58,7 @@ class Predict(object):
             self.input_length = 3 * 16000
             return Model.Musicnn(dataset=self.dataset)
         elif self.model_type == 'musicnn_mel':
-            self.input_length = 3 * 16000
+            self.input_length = 130
             return Model.MusicnnMel(dataset=self.dataset)
         elif self.model_type == 'crnn':
             self.input_length = 29 * 16000
@@ -141,7 +141,7 @@ class Predict(object):
             npy_path = os.path.join(self.data_path, filename)
         elif self.dataset == '4mula':
             npy_path = os.path.join(self.data_path, 'mel_npy', fn) + '.npy'
-            
+
         raw = np.load(npy_path, mmap_mode='r')
         if self.dataset == '4mula':
             raw = raw.T
@@ -150,7 +150,7 @@ class Predict(object):
         length = len(raw)
         hop = (length - self.input_length) // self.batch_size
 
-        if self.model_type in ['musicnn_mel', 'short_mel']:
+        if self.model_type in ['short_mel', 'musicnn_mel']:
             x = torch.zeros(self.batch_size, 128, self.input_length)
         else:
             x = torch.zeros(self.batch_size, self.input_length)
@@ -235,10 +235,11 @@ if __name__ == '__main__':
     parser.add_argument('--num_workers', type=int, default=0)
     parser.add_argument('--dataset', type=str, default='mtat', choices=['mtat', 'msd', 'jamendo', '4mula'])
     parser.add_argument('--model_type', type=str, default='fcn',
-                        choices=['fcn', 'musicnn', 'crnn', 'sample', 'se', 'short', 'short_res', 'short_mel', 'attention', 'hcnn'])
+                        choices=['fcn', 'musicnn', 'musicnn_mel', 'crnn', 'sample', 'se', 'short', 'short_res', 'short_mel', 'attention', 'hcnn'])
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--model_load_path', type=str, default='.')
     parser.add_argument('--data_path', type=str, default='./data')
+    parser.add_argument('--loss', type=str, default='bce', choices=['bce', 'focal'])
 
     config = parser.parse_args()
 
