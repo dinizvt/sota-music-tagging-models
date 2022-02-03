@@ -57,6 +57,9 @@ class Predict(object):
         elif self.model_type == 'musicnn':
             self.input_length = 3 * 16000
             return Model.Musicnn(dataset=self.dataset)
+        elif self.model_type == 'musicnn_mel':
+            self.input_length = 3 * 16000
+            return Model.MusicnnMel(dataset=self.dataset)
         elif self.model_type == 'crnn':
             self.input_length = 29 * 16000
             return Model.CRNN()
@@ -147,7 +150,7 @@ class Predict(object):
         length = len(raw)
         hop = (length - self.input_length) // self.batch_size
 
-        if self.model_type == 'short_mel':
+        if self.model_type in ['musicnn_mel', 'short_mel']:
             x = torch.zeros(self.batch_size, 128, self.input_length)
         else:
             x = torch.zeros(self.batch_size, self.input_length)
