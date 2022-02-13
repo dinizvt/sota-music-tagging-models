@@ -281,7 +281,7 @@ class Solver(object):
                         epoch+1, self.n_epochs, ctr, len(self.data_loader), loss.item(),
                         datetime.timedelta(seconds=time.time()-start_t)))
 
-    def extra_metrics (self, est_array, gt_array):
+    def get_metrics (self, est_array, gt_array):
         res = []
         for score in self.extra_metrics:
             try:
@@ -353,7 +353,7 @@ class Solver(object):
         loss = np.mean(losses)
         print('loss: %.4f' % loss)
         roc_auc, pr_auc = self.get_auc(est_array, gt_array)
-        self.extra_metrics(est_array, gt_array)
+        self.get_metrics(est_array, gt_array)
         self.writer.add_scalar('Loss/valid', loss, epoch)
         self.writer.add_scalar('AUC/ROC', roc_auc, epoch)
         self.writer.add_scalar('AUC/PR', pr_auc, epoch)
