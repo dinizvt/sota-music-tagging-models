@@ -288,10 +288,10 @@ class Solver(object):
             try:
                 f = getattr(metrics, score)
                 res.append(f(gt_array, est_binary, average='macro'))
-                print(f'{score}: {res[-1]}')
+                print('%s: %.4f' % (score, res[-1]))
             except ValueError:
                 raise('Metric not found')
-        return list(res.values)
+        return tuple(res)
 
     def validation(self, best_metric, epoch):
         roc_auc, pr_auc, loss = self.get_validation_score(epoch)
