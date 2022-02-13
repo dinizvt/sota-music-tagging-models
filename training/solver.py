@@ -63,6 +63,7 @@ class Solver(object):
         self.lr = config.lr
         self.use_tensorboard = config.use_tensorboard
         self.loss_type = config.loss
+        self.extra_metrics = config.metrics
 
         # model path and step size
         self.model_save_path = config.model_save_path
@@ -280,6 +281,17 @@ class Solver(object):
                         epoch+1, self.n_epochs, ctr, len(self.data_loader), loss.item(),
                         datetime.timedelta(seconds=time.time()-start_t)))
 
+    def extra_metrics (self, est_array, gt_array):
+        res = []
+        for score in self.extra_metrics:
+            try:
+                f = getattr(metrics, score)
+                res.append(f(gt_array, est_array, average='macro'))
+                print(f'{score}: {res[-1]}')
+            except ValueError:
+                raise('Metric not found')
+        return list(res.values)
+
     def validation(self, best_metric, epoch):
         roc_auc, pr_auc, loss = self.get_validation_score(epoch)
         score = 1 - loss
@@ -341,6 +353,7 @@ class Solver(object):
         loss = np.mean(losses)
         print('loss: %.4f' % loss)
         roc_auc, pr_auc = self.get_auc(est_array, gt_array)
+        self.extra_metrics(est_array, gt_array)
         self.writer.add_scalar('Loss/valid', loss, epoch)
         self.writer.add_scalar('AUC/ROC', roc_auc, epoch)
         self.writer.add_scalar('AUC/PR', pr_auc, epoch)
