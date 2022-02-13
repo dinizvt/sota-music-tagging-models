@@ -282,11 +282,12 @@ class Solver(object):
                         datetime.timedelta(seconds=time.time()-start_t)))
 
     def get_metrics (self, est_array, gt_array):
+        est_binary = est_array > 0.5
         res = []
         for score in self.extra_metrics:
             try:
                 f = getattr(metrics, score)
-                res.append(f(gt_array, est_array, average='macro'))
+                res.append(f(gt_array, est_binary, average='macro'))
                 print(f'{score}: {res[-1]}')
             except ValueError:
                 raise('Metric not found')
