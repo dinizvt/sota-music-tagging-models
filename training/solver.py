@@ -204,7 +204,7 @@ class Solver(object):
 
     def opt_schedule(self, current_optimizer, drop_counter):
         # adam to sgd
-        if current_optimizer == 'adam' and drop_counter == 80:
+        if current_optimizer == 'adam' and drop_counter == int(self.n_epochs*0.4):
             self.load(os.path.join(self.model_save_path, 'best_model.pth'))
             self.optimizer = torch.optim.SGD(self.model.parameters(), 0.001,
                                             momentum=0.9, weight_decay=0.0001,
@@ -213,7 +213,7 @@ class Solver(object):
             drop_counter = 0
             print('sgd 1e-3')
         # first drop
-        if current_optimizer == 'sgd_1' and drop_counter == 20:
+        if current_optimizer == 'sgd_1' and drop_counter == int(self.n_epochs*0.1):
             self.load(os.path.join(self.model_save_path, 'best_model.pth'))
             for pg in self.optimizer.param_groups:
                 pg['lr'] = 0.0001
@@ -221,7 +221,7 @@ class Solver(object):
             drop_counter = 0
             print('sgd 1e-4')
         # second drop
-        if current_optimizer == 'sgd_2' and drop_counter == 20:
+        if current_optimizer == 'sgd_2' and drop_counter == int(self.n_epochs*0.1):
             self.load(os.path.join(self.model_save_path, 'best_model.pth'))
             for pg in self.optimizer.param_groups:
                 pg['lr'] = 0.00001
