@@ -14,6 +14,7 @@ import torch.nn.functional as F
 from sklearn.preprocessing import LabelBinarizer
 from torch.utils.tensorboard import SummaryWriter
 from torch.autograd import Variable
+from typing import Iterable
 
 import model as Model
 from focalloss import FocalLoss
@@ -354,7 +355,8 @@ class Solver(object):
         loss = np.mean(losses)
         print('loss: %.4f' % loss)
         roc_auc, pr_auc = self.get_auc(est_array, gt_array)
-        self.get_metrics(est_array, gt_array)
+        if isinstance(self.extra_metrics, Iterable):
+            self.get_metrics(est_array, gt_array)
         self.writer.add_scalar('Loss/valid', loss, epoch)
         self.writer.add_scalar('AUC/ROC', roc_auc, epoch)
         self.writer.add_scalar('AUC/PR', pr_auc, epoch)
